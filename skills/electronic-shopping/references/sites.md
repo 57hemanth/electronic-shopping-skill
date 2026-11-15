@@ -33,6 +33,7 @@ Big C · Happi Mobiles · Lot Mobiles · Sangeetha Mobiles · B New Mobiles (mob
   shop and ask them to match it**. Check a branch exists near the pincode using the chain's store locator.
 
 ## Offers (record separately from the price)
+The full procedure, with where each store shows its offers, is the `shopping-offers` skill.
 - **Bank card offers** (instant discounts on specific cards): note the card and amount.
 - **No-cost EMI**: note the tenure; check for processing fees.
 - **Exchange**: value depends on the old device; never include it in the main price.

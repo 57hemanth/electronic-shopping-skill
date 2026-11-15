@@ -27,6 +27,8 @@ CATEGORIES = {"mobile", "laptop", "tv", "ac", "watch"}
 DELIVERY = {"yes", "no", "not_checked"}
 SERVICE = {"found", "not_found", "not_checked"}
 DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+OFFER_TYPES = {"bank", "emi", "exchange", "coupon", "sale", "other"}
+INSTANT = {"bank", "coupon", "sale"}  # offers that lower what you pay at checkout
 
 LABELS = {
     "en": {
@@ -35,13 +37,19 @@ LABELS = {
         "del_to": "to {pin}", "del_other": "not the buyer's pincode",
         "advice": "My advice", "best_price": "Best price", "why": "Why it fits", "drawbacks": "Drawbacks", "specs": "Key specs",
         "prices": "Prices", "site": "Site", "price": "Price", "delivery": "Delivery", "link": "Link", "open": "Open",
-        "offers": "Offers (not included in the price)", "service": "Service centre", "sources": "Sources", "also": "Also considered",
+        "offers": "Offers", "service": "Service centre", "sources": "Sources", "also": "Also considered",
         "assumed": "Assumptions", "unconfirmed": "Not confirmed", "brand": {"trusted": "Trusted brands", "value": "Value / power brands", "specific": "", "none": "Any brand"},
         "del": {"yes": "✓ Delivers", "no": "✗ No delivery", "not_checked": "Not checked"},
         "svc": {"found": "✓", "not_found": "✗ None nearby", "not_checked": "Not checked"},
         "footer": "Prices change daily. Check the link again before buying. At a local shop, show this online price and ask them to match it.",
         "wa_head": "{cat} advice", "wa_best": "My pick", "wa_tail": "Prices checked on {date}. Check the link again before buying.",
         "on": "", "variant": "Variant",
+        "cards": "Cards", "with_offer": "with offer", "you_can_use": "You can use this",
+        "offer_type": {"bank": "Bank offer", "emi": "EMI", "exchange": "Exchange", "coupon": "Coupon", "sale": "Sale price", "other": "Offer"},
+        "saving": "Saving", "conditions": "Conditions", "no_offers": "No offers found on the sites checked.",
+        "offers_note": "Offers aren't added together unless the store says they stack. Exchange value depends on your old device.",
+        "reviews": "Ratings and reviews", "ratings": "ratings", "experts": "Expert reviews", "like": "Buyers like", "complain": "Buyers complain about",
+        "wa_offer": "Offer", "wa_rating": "ratings",
         "share_wa": "Share on WhatsApp", "copy": "Copy message", "copied": "Copied ✓", "copy_fail": "Select and copy the message below",
     },
 }
@@ -102,6 +110,41 @@ def validate(d: dict) -> list[str]:
                 errs.append(f"{ptag}: delivery_pincode must be the 6-digit pincode the store showed")
             if pr.get("delivery") in ("yes", "no") and not dp and not req.get("pincode"):
                 errs.append(f"{ptag}: a delivery result needs delivery_pincode (the pincode the store checked)")
+        sites = {str(pr.get("site", "")).strip().lower() for pr in prices}
+        for j, o in enumerate(p.get("offers") or [], 1):
+            otag = f"{tag} offer {j}"
+            if isinstance(o, str):
+                continue  # older research files: plain text, shown as is
+            if not str(o.get("text", "")).strip():
+                errs.append(f"{otag}: text missing (the offer as the store words it)")
+            if o.get("type", "other") not in OFFER_TYPES:
+                errs.append(f"{otag}: type must be one of {sorted(OFFER_TYPES)}")
+            if not str(o.get("site", "")).strip():
+                errs.append(f"{otag}: site missing")
+            elif o.get("saving") is not None and str(o["site"]).strip().lower() not in sites:
+                errs.append(f"{otag}: site {o['site']!r} has no price in this pick, so the saving can't be applied")
+            if o.get("saving") is not None and (not isinstance(o["saving"], (int, float)) or o["saving"] <= 0):
+                errs.append(f"{otag}: saving must be a positive number in rupees, or left out")
+            if o.get("url") and not str(o["url"]).startswith(("http://", "https://")):
+                errs.append(f"{otag}: url must start with http")
+        rv = p.get("reviews") or {}
+        for j, r in enumerate(rv.get("ratings") or [], 1):
+            rtag = f"{tag} rating {j}"
+            if not str(r.get("site", "")).strip():
+                errs.append(f"{rtag}: site missing")
+            if not isinstance(r.get("rating"), (int, float)) or not 0 < r["rating"] <= 5:
+                errs.append(f"{rtag}: rating must be a number from 0 to 5 as shown on the site")
+            if not isinstance(r.get("count"), int) or r["count"] < 0:
+                errs.append(f"{rtag}: count must be the number of ratings (a whole number)")
+            if not str(r.get("url", "")).startswith(("http://", "https://")):
+                errs.append(f"{rtag}: url missing")
+        for j, x in enumerate(rv.get("expert") or [], 1):
+            xtag = f"{tag} expert review {j}"
+            for k in ("source", "verdict"):
+                if not str(x.get(k, "")).strip():
+                    errs.append(f"{xtag}: {k} missing")
+            if not str(x.get("url", "")).startswith(("http://", "https://")):
+                errs.append(f"{xtag}: url missing")
         srcs = p.get("sources") or []
         if not srcs or not all(str(s.get("url", "")).startswith(("http://", "https://")) for s in srcs):
             errs.append(f"{tag}: needs at least one source, each with a url")
@@ -123,6 +166,13 @@ def warnings(d: dict) -> list[str]:
             out.append(f"{p.get('name')}: priced well below the budget; check it isn't a different variant")
         if len(p.get("prices") or []) < 2:
             out.append(f"{p.get('name')}: only one site checked (the skill asks for two)")
+        if "offers" not in p:
+            out.append(f"{p.get('name')}: offers not recorded (use an empty list if none were found)")
+        rv = p.get("reviews") or {}
+        if not rv.get("ratings"):
+            out.append(f"{p.get('name')}: no store ratings recorded")
+        if not rv.get("expert"):
+            out.append(f"{p.get('name')}: no expert review recorded")
     return out
 
 
@@ -140,6 +190,39 @@ def delivery_note(pr: dict, req: dict, L: dict) -> str:
     other = req.get("pincode") and dp != req.get("pincode")
     text = L["del_to"].format(pin=dp) + (f" · {L['del_other']}" if other else "")
     return f'<br><span style="color:var(--muted);font-size:12px">{e(text)}</span>'
+
+
+def offers_of(p: dict) -> list[dict]:
+    return [{"text": o, "type": "other"} if isinstance(o, str) else o for o in p.get("offers") or []]
+
+
+def best_offer(p: dict) -> tuple[float, dict, dict] | None:
+    """Lowest price after one instant offer (bank, coupon, sale) the buyer isn't known to be unable to use.
+
+    Returns (price after offer, the offer, the price entry it applies to). Offers are never stacked:
+    stores word stacking rules differently, so one offer at a time is the honest number.
+    """
+    by_site = {str(pr["site"]).strip().lower(): pr for pr in p.get("prices") or []}
+    found = None
+    for o in offers_of(p):
+        if o.get("type") not in INSTANT or not o.get("saving") or o.get("applies_to_buyer") is False:
+            continue
+        pr = by_site.get(str(o.get("site", "")).strip().lower())
+        if not pr:
+            continue
+        after = pr["price"] - o["saving"]
+        if after > 0 and (found is None or after < found[0]):
+            found = (after, o, pr)
+    return found
+
+
+def count(n: int) -> str:
+    """Indian grouping for counts: 123456 -> 1,23,456."""
+    return inr(n)[1:]
+
+
+def stars(r: float) -> str:
+    return f"★ {r:.1f}"
 
 
 def best(p: dict) -> dict:
@@ -196,6 +279,16 @@ a{color:var(--accent)}
 .note{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 18px;margin:18px 0}
 .note h2{font-size:15px;margin:0 0 6px}
 .note ul{margin:0;padding-left:20px}
+.after{margin:0 0 4px;font-size:15px;color:var(--good);font-weight:600}
+.after span{color:var(--muted);font-weight:400}
+.offer-type{display:inline-block;font-size:12px;font-weight:700;padding:1px 8px;border-radius:999px;background:var(--accent-soft);color:var(--accent);margin-right:6px;white-space:nowrap}
+.can-use{display:inline-block;font-size:12px;font-weight:700;color:var(--good);margin-left:6px}
+.fine{color:var(--muted);font-size:13px}
+.ratings{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 6px}
+.chip{border:1px solid var(--line);border-radius:10px;padding:6px 10px;font-size:14px;text-decoration:none;color:var(--ink);background:var(--bg)}
+.chip b{color:#b26b00}
+.expert{margin:0;padding-left:20px}.expert li{margin:4px 0}
+.like li::marker{color:var(--good)}.complain li::marker{color:var(--bad)}
 main{padding-bottom:104px}
 .share{position:fixed;left:0;right:0;bottom:0;z-index:10;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-top:1px solid var(--line);padding:12px 16px calc(12px + env(safe-area-inset-bottom))}
 .share-in{max-width:760px;margin:0 auto;display:flex;gap:10px}
@@ -224,6 +317,8 @@ def render_html(d: dict, L: dict) -> str:
     if req.get("pincode") or req.get("place"):
         meta.append((L["pincode"] if req.get("pincode") else L["place"],
                      " · ".join(x for x in (req.get("pincode"), req.get("place")) if x)))
+    if req.get("cards"):
+        meta.append((L["cards"], ", ".join(req["cards"])))
     meta.append((L["checked"], d["checked_on"]))
     out = [f'<header><h1>{e(cat)} · {e(L["title"])}</h1><ul class="meta">']
     out += [f"<li>{e(k)}: <b>{e(v)}</b></li>" for k, v in meta]
@@ -233,8 +328,13 @@ def render_html(d: dict, L: dict) -> str:
     out.append(f'<table class="summary"><thead><tr><th>#</th><th>Model</th><th>{e(L["best_price"])}</th></tr></thead><tbody>')
     for i, p in enumerate(d["picks"], 1):
         b = best(p)
-        out.append(f'<tr><td>{i}</td><td><b>{e(p["name"])}</b><br><span style="color:var(--muted)">{e(p["best_for"])}</span></td>'
-                   f'<td class="num">{e(inr(b["price"]))}<br><span style="font-weight:400;color:var(--muted)">{e(b["site"])}</span></td></tr>')
+        bo = best_offer(p)
+        rts = (p.get("reviews") or {}).get("ratings") or []
+        top = max(rts, key=lambda r: r["count"]) if rts else None
+        rating = f' · <span style="color:#b26b00">{e(stars(top["rating"]))}</span>' if top else ""
+        after = (f'<br><span style="font-weight:600;color:var(--good)">{e(inr(bo[0]))} {e(L["with_offer"])}</span>' if bo else "")
+        out.append(f'<tr><td>{i}</td><td><b>{e(p["name"])}</b>{rating}<br><span style="color:var(--muted)">{e(p["best_for"])}</span></td>'
+                   f'<td class="num">{e(inr(b["price"]))}<br><span style="font-weight:400;color:var(--muted)">{e(b["site"])}</span>{after}</td></tr>')
     out.append("</tbody></table>")
 
     for i, p in enumerate(d["picks"], 1):
@@ -242,6 +342,9 @@ def render_html(d: dict, L: dict) -> str:
         out.append(f'<article class="pick"><div class="pick-head"><div class="rank">{i}</div><div>'
                    f'<h3>{e(p["name"])}</h3><p class="bestfor">{e(p["best_for"])}</p></div></div>')
         out.append(f'<div class="price">{e(inr(b["price"]))}<small>{e(b["site"])} · {e(b["checked_on"])}</small></div>')
+        bo = best_offer(p)
+        if bo:
+            out.append(f'<p class="after">{e(inr(bo[0]))} {e(L["with_offer"])} <span>· {e(bo[1]["text"])} ({e(bo[2]["site"])})</span></p>')
         out.append('<div class="cols"><div>')
         out.append(f'<h4>{e(L["why"])}</h4><ul class="why">' + "".join(f"<li>{e(x)}</li>" for x in p["why"]) + "</ul></div><div>")
         out.append(f'<h4>{e(L["drawbacks"])}</h4><ul class="cons">' + "".join(f"<li>{e(x)}</li>" for x in p["drawbacks"]) + "</ul></div></div>")
@@ -253,8 +356,46 @@ def render_html(d: dict, L: dict) -> str:
             out.append(f'<tr><td>{e(pr["site"])}{var}</td><td><b>{e(inr(pr["price"]))}</b></td>'
                        f'<td class="del-{e(dv)}">{e(L["del"][dv])}{delivery_note(pr, req, L)}</td><td><a href="{e(pr["url"])}" target="_blank" rel="noopener">{e(L["open"])}</a></td></tr>')
         out.append("</tbody></table>")
-        if p.get("offers"):
-            out.append(f'<h4>{e(L["offers"])}</h4><ul>' + "".join(f"<li>{e(x)}</li>" for x in p["offers"]) + "</ul>")
+        if "offers" in p:
+            out.append(f'<h4>{e(L["offers"])}</h4>')
+            offs = offers_of(p)
+            if not offs:
+                out.append(f'<p class="fine" style="margin:0">{e(p.get("offers_note") or L["no_offers"])}</p>')
+            else:
+                rows = []
+                for o in sorted(offs, key=lambda o: -(o.get("saving") or 0)):
+                    t = o.get("type", "other")
+                    use = f'<span class="can-use">✓ {e(L["you_can_use"])}</span>' if o.get("applies_to_buyer") else ""
+                    cond = f'<br><span class="fine">{e(o["conditions"])}</span>' if o.get("conditions") else ""
+                    link = f' · <a href="{e(o["url"])}" target="_blank" rel="noopener">{e(L["open"])}</a>' if o.get("url") else ""
+                    saving = e(inr(o["saving"])) if o.get("saving") else "—"
+                    rows.append(f'<tr><td><span class="offer-type">{e(L["offer_type"].get(t, t))}</span>{e(o["text"])}{use}{cond}</td>'
+                                f'<td>{e(o.get("site", ""))}{link}</td><td><b>{saving}</b></td></tr>')
+                out.append(f'<table class="tbl"><thead><tr><th>{e(L["offers"])}</th><th>{e(L["site"])}</th><th>{e(L["saving"])}</th></tr></thead>'
+                           f'<tbody>{"".join(rows)}</tbody></table><p class="fine" style="margin:6px 0 0">{e(L["offers_note"])}</p>')
+        rv = p.get("reviews") or {}
+        if any(rv.get(k) for k in ("ratings", "expert", "praise", "complaints")):
+            out.append(f'<h4>{e(L["reviews"])}</h4>')
+            if rv.get("ratings"):
+                out.append('<div class="ratings">' + "".join(
+                    f'<a class="chip" href="{e(r["url"])}" target="_blank" rel="noopener"><b>{e(stars(r["rating"]))}</b> · '
+                    f'{e(count(r["count"]))} {e(L["ratings"])} · {e(r["site"])}</a>'
+                    for r in sorted(rv["ratings"], key=lambda r: -r["count"])) + "</div>")
+            if rv.get("expert"):
+                out.append(f'<p class="fine" style="margin:8px 0 2px">{e(L["experts"])}</p><ul class="expert">' + "".join(
+                    f'<li><a href="{e(x["url"])}" target="_blank" rel="noopener">{e(x["source"])}</a>'
+                    + (f' · <b>{e(x["score"])}</b>' if x.get("score") else "") + f': {e(x["verdict"])}</li>'
+                    for x in rv["expert"]) + "</ul>")
+            if rv.get("praise") or rv.get("complaints"):
+                out.append('<div class="cols"><div>')
+                if rv.get("praise"):
+                    out.append(f'<p class="fine" style="margin:8px 0 2px">{e(L["like"])}</p><ul class="like">'
+                               + "".join(f"<li>{e(x)}</li>" for x in rv["praise"]) + "</ul>")
+                out.append("</div><div>")
+                if rv.get("complaints"):
+                    out.append(f'<p class="fine" style="margin:8px 0 2px">{e(L["complain"])}</p><ul class="complain">'
+                               + "".join(f"<li>{e(x)}</li>" for x in rv["complaints"]) + "</ul>")
+                out.append("</div></div>")
         if p.get("key_specs"):
             out.append(f'<h4>{e(L["specs"])}</h4><table class="tbl specs"><tbody>'
                        + "".join(f"<tr><td>{e(k)}</td><td>{e(v)}</td></tr>" for k, v in p["key_specs"].items()) + "</tbody></table>")
@@ -325,6 +466,13 @@ def render_whatsapp(d: dict, L: dict) -> str:
         b = best(p)
         lines.append(f"*{i}. {p['name']}*: {inr(b['price'])} ({b['site']})")
         lines.append(f"   {p['best_for']}")
+        bo = best_offer(p)
+        if bo:
+            lines.append(f"   💳 {inr(bo[0])} with {bo[1]['text']} ({bo[2]['site']})")
+        rts = (p.get("reviews") or {}).get("ratings") or []
+        if rts:
+            top = max(rts, key=lambda r: r["count"])
+            lines.append(f"   ⭐ {top['rating']:.1f} ({count(top['count'])} {L['wa_rating']}, {top['site']})")
         lines.append(f"   {b['url']}")
     lines += ["", f"*{L['wa_best']}:* {d['advice']}", "", L["wa_tail"].format(date=d["checked_on"])]
     return "\n".join(lines) + "\n"

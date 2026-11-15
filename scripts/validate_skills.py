@@ -20,7 +20,7 @@ import tomllib
 from pathlib import Path
 
 NAME_RE = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
-PATH_RE = re.compile(r"(?<![\w/.-])((?:references|assets|scripts)/[\w./-]+\.\w+)")
+PATH_RE = re.compile(r"(?<![\w/.-])((?:\.\./[a-z0-9-]+/)?(?:references|assets|scripts)/[\w./-]+\.\w+|\.\./[a-z0-9-]+/SKILL\.md)")
 
 
 def frontmatter(text: str) -> tuple[dict, str]:

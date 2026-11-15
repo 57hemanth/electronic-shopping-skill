@@ -26,6 +26,18 @@ You ask your coding agent (Claude Code, Codex or Gemini CLI). The skill makes it
    - a **WhatsApp message** to paste to whoever asked;
    - optionally a **PNG** of the report.
 
+### Three skills
+
+| Skill | Use it for |
+| --- | --- |
+| `electronic-shopping` | "Which phone / laptop / TV / AC / watch should I buy?": the full flow above, ending in the report |
+| `shopping-offers` | "Any offers on this phone?", "Is this a good deal?", "Which card gives the best price?": every current bank, EMI, exchange, coupon and sale offer with its conditions, and the price after the best one the buyer can use (offers are never added together) |
+| `shopping-reviews` | "Reviews of this TV?", "What are the problems with this laptop?": Amazon and Flipkart ratings with their counts, expert verdicts with links, and what buyers praise and complain about in recent reviews |
+
+`electronic-shopping` uses the other two for every shortlisted product, so the report has an **Offers**
+section (with the price after the best usable offer) and a **Ratings and reviews** section, and the
+WhatsApp message carries the best offer and the rating.
+
 It never makes up a price, model or spec, never logs in or buys anything, and every price carries its
 source link and date. The report builder refuses research that doesn't.
 
@@ -123,6 +135,8 @@ All paths below are in `skills/electronic-shopping/`.
 ## Repo layout
 
 ```
+skills/shopping-offers/SKILL.md  standalone offers skill (also used by electronic-shopping)
+skills/shopping-reviews/SKILL.md standalone reviews skill (also used by electronic-shopping)
 skills/electronic-shopping/
   SKILL.md                     the procedure: ask → research → decide → report
   references/                  category checklists, brands, sites, regional notes

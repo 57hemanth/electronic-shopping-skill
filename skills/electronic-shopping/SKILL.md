@@ -78,7 +78,9 @@ Never hold up the research for the pincode: if it's skipped, go on without it.
 5. **Pincode (optional):** "Give the buyer's pincode if it's different from yours, or skip it and I'll
    use the delivery location your Amazon and Flipkart already show." Also ask for the town if they skip
    the pincode but the buyer lives elsewhere; the service-centre check needs a place.
-6. **Category-specific must-asks** from the category file (TV: room size and viewing distance; AC: room
+6. **Cards and payment (optional):** "Which bank cards do you use (credit or debit), and will you pay in
+   full or on EMI? Any old device to exchange?" This decides which offers they can actually use.
+7. **Category-specific must-asks** from the category file (TV: room size and viewing distance; AC: room
    size in sq ft, floor, afternoon sun; laptop: carry it daily or not).
 
 If the user doesn't know an answer, use the sensible default from the category file and **say which
@@ -110,9 +112,16 @@ default you used** in the final answer.
    - **delivery** on Amazon and Flipkart, and for ACs and TVs whether installation is offered. Record
      the result together with `delivery_pincode`, the pincode the store actually checked (see
      "Delivery and pincode" below);
-   - **one or two independent reviews**; skip pages that are clearly paid placement or affiliate lists
-     with no testing;
-   - known problems: overheating, software complaints, poor service reputation.
+   - **offers** on each store: bank discounts, no-cost EMI, exchange, coupons and sale prices, with
+     their conditions, following the `shopping-offers` skill (`../shopping-offers/SKILL.md`). Record
+     an empty list with a note when a store has none;
+   - **ratings and reviews**, following the `shopping-reviews` skill (`../shopping-reviews/SKILL.md`):
+     the Amazon and Flipkart star rating **with the number of ratings**, one or two expert reviews,
+     and what buyers praise and complain about in recent reviews. Feed the complaints into
+     `drawbacks`.
+   If those two skills aren't installed, do the same from this summary: offers come only from the
+   store's own page, are never added together, and only instant discounts count as a saving; ratings
+   always come with their count, and review themes are paraphrased, with how many reviews said so.
 3. **The nearest service centre**: the brand's official service-centre locator, with the buyer's pincode,
    their town, or (if neither was given) the location the stores showed. Skip it only if no place is
    known, and say so.
@@ -121,8 +130,9 @@ default you used** in the final answer.
 
 ### With a browser: work through it visibly
 - **One product at a time.** Open its Amazon, Flipkart and brand-store pages in separate tabs, side by
-  side. On each: confirm it is the right variant, read the price, and read the delivery result as
-  described under "Delivery and pincode". Then **close those tabs** (or navigate them to the next product) before the next
+  side. On each: confirm it is the right variant, read the price, open the **offers** to read their
+  terms, read the **rating and its count**, skim the most recent critical reviews, and read the
+  delivery result as described under "Delivery and pincode". Then **close those tabs** (or navigate them to the next product) before the next
   candidate, so the user can follow along and the window doesn't fill up.
 - Search the store's own site from its search box when you don't have the product URL; copy the exact
   product page URL into the research, not the search page.
@@ -156,7 +166,9 @@ otherwise use another store. Mark delivery as "not checked" and say the browser 
 For each of the top 3:
 - **Who it is best for**, in one line ("best camera under ₹20,000, but the battery is only average").
 - **3 reasons it fits this buyer**, and **1–2 honest drawbacks**. Every product has at least one.
-- **Best confirmed price**, with site and date, plus any other site's price.
+- **Best confirmed price**, with site and date, plus any other site's price, and the **price after the
+  best offer the buyer can use** (the report builder works this out from the offers).
+- **What owners say**: the rating with its count, and the most common complaint.
 - **Delivery and service**: confirmed, not found, or not checked, and for which pincode.
 
 Then a single **"My advice"**: which one you'd pick for this person and why, in two lines.
@@ -199,5 +211,6 @@ Then ask whether they want to change the budget, brand or use, or compare two mo
 - Brand tiers: [references/brands.md](references/brands.md)
 - Sites and what to check: [references/sites.md](references/sites.md)
 - Telangana and Andhra specifics: [references/regional.md](references/regional.md)
+- Offers and reviews, in detail: the `shopping-offers` and `shopping-reviews` skills in this repository
 - Research file format: [assets/research.example.json](assets/research.example.json)
 - Report builder: [scripts/build_report.py](scripts/build_report.py)

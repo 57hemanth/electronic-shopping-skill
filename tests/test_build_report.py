@@ -68,6 +68,62 @@ class ValidateTest(unittest.TestCase):
         self.assertTrue(any("above the budget" in w for w in build_report.warnings(d)))
 
 
+class OffersReviewsTest(unittest.TestCase):
+    def test_best_offer_uses_one_instant_offer_the_buyer_can_use(self):
+        d = example()
+        after, offer, price = build_report.best_offer(d["picks"][0])
+        self.assertEqual(after, 18999 - 1500)
+        self.assertEqual(price["site"], "Amazon")
+        self.assertIsNone(build_report.best_offer(d["picks"][1]))  # no offers
+
+    def test_offers_are_never_stacked_and_unusable_ones_skipped(self):
+        p = example()["picks"][0]
+        p["offers"].append({"site": "Amazon", "type": "coupon", "text": "₹500 coupon", "saving": 500})
+        self.assertEqual(build_report.best_offer(p)[0], 18999 - 1500)  # not 18999 - 2000
+        p["offers"][0]["applies_to_buyer"] = False
+        self.assertEqual(build_report.best_offer(p)[0], 18999 - 500)
+
+    def test_exchange_and_emi_are_not_savings(self):
+        p = example()["picks"][0]
+        p["offers"] = [{"site": "Flipkart", "type": "exchange", "text": "Up to ₹12,000 off", "saving": 12000}]
+        self.assertIsNone(build_report.best_offer(p))
+
+    def test_offer_validation(self):
+        d = example()
+        d["picks"][0]["offers"].append({"site": "Croma", "type": "bank", "text": "x", "saving": 100})
+        d["picks"][0]["offers"].append({"site": "Amazon", "type": "magic", "text": ""})
+        errs = build_report.validate(d)
+        self.assertTrue(any("has no price in this pick" in e for e in errs))
+        self.assertTrue(any("type must be" in e for e in errs))
+        self.assertTrue(any("text missing" in e for e in errs))
+
+    def test_rating_needs_count_and_url(self):
+        d = example()
+        d["picks"][0]["reviews"]["ratings"][0] = {"site": "Amazon", "rating": 4.8}
+        errs = build_report.validate(d)
+        self.assertTrue(any("count must be" in e for e in errs))
+        self.assertTrue(any("rating 1: url missing" in e for e in errs))
+
+    def test_report_and_message_show_offers_and_reviews(self):
+        d = example()
+        L = build_report.LABELS["en"]
+        out = build_report.render_html(d, L)
+        self.assertIn("₹17,499 with offer", out)
+        self.assertIn("★ 4.4", out)
+        self.assertIn("35,112 ratings", out)
+        self.assertIn("Buyers complain about", out)
+        self.assertIn("You can use this", out)
+        msg = build_report.render_whatsapp(d, L)
+        self.assertIn("💳 ₹17,499 with", msg)
+        self.assertIn("⭐ 4.4 (35,112 ratings, Flipkart)", msg)
+
+    def test_legacy_string_offers_still_render(self):
+        d = example()
+        d["picks"][0]["offers"] = ["Old style text offer"]
+        self.assertEqual(build_report.validate(d), [])
+        self.assertIn("Old style text offer", build_report.render_html(d, build_report.LABELS["en"]))
+
+
 class PincodeTest(unittest.TestCase):
     def test_no_pincode_is_allowed(self):
         d = example()
