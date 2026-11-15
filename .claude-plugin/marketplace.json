@@ -1,0 +1,17 @@
+{
+  "name": "electronic-shopping-skill",
+  "owner": { "name": "Hemanth Yanamaddi" },
+  "metadata": {
+    "description": "Buying advice for mobiles, laptops, TVs, ACs and watches, for Telangana and Andhra Pradesh.",
+    "version": "0.1.0"
+  },
+  "plugins": [
+    {
+      "name": "electronic-shopping",
+      "description": "Asks budget, brand preference, use and pincode; researches Amazon, Flipkart, brand stores and local chains; writes an HTML report and a Telugu WhatsApp message.",
+      "source": "./",
+      "strict": false,
+      "skills": ["./skills/electronic-shopping"]
+    }
+  ]
+}

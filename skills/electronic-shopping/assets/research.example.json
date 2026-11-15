@@ -1,0 +1,51 @@
+{
+  "_schema": "Example only: every name, price and URL here is a placeholder. Copy this file, replace everything with what you found today, and delete this _schema field. Required: request.category, request.pincode, checked_on, advice, and 1-5 picks. Each pick needs name, best_for, why (list), drawbacks (list), at least one price {site, price, url, checked_on} and at least one source {title, url}. Optional: key_specs (object), offers (list), service {status: found | not_found | not_checked, detail, url}, prices[].variant, prices[].delivery (yes | no | not_checked), also_considered [{name, why_not}], assumptions (list), not_confirmed (list).",
+  "language": "te",
+  "checked_on": "2026-01-01",
+  "request": {
+    "category": "mobile",
+    "budget_min": 15000,
+    "budget_max": 20000,
+    "brand_preference": "value",
+    "brands": [],
+    "use": "camera",
+    "for_whom": "amma",
+    "pincode": "000000",
+    "place": "Example town",
+    "notes": "Wants a simple phone with a good camera for family photos."
+  },
+  "advice": "Example Phone A: best camera in this budget, and its service centre is in the nearest town. Example Phone B if battery matters more than photos.",
+  "picks": [
+    {
+      "name": "Example Phone A (8 GB / 128 GB)",
+      "best_for": "Best camera in this budget; battery is average",
+      "why": ["Placeholder reason one", "Placeholder reason two", "Placeholder reason three"],
+      "drawbacks": ["Placeholder drawback"],
+      "key_specs": {"Chipset": "Example 7", "Display": "6.6\" 120 Hz", "Battery": "5000 mAh", "Updates": "4 years OS"},
+      "prices": [
+        {"site": "Amazon", "price": 18999, "variant": "8 GB / 128 GB", "url": "https://example.com/amazon-placeholder", "checked_on": "2026-01-01", "delivery": "yes"},
+        {"site": "Flipkart", "price": 19499, "variant": "8 GB / 128 GB", "url": "https://example.com/flipkart-placeholder", "checked_on": "2026-01-01", "delivery": "not_checked"}
+      ],
+      "offers": ["Placeholder: ₹1,000 off with an example bank card"],
+      "service": {"status": "found", "detail": "Authorised centre in Example town, about 12 km", "url": "https://example.com/service-placeholder"},
+      "sources": [{"title": "Official specs (placeholder)", "url": "https://example.com/specs-placeholder"}]
+    },
+    {
+      "name": "Example Phone B (8 GB / 256 GB)",
+      "best_for": "Longest battery; camera is good in daylight only",
+      "why": ["Placeholder reason one", "Placeholder reason two"],
+      "drawbacks": ["Placeholder drawback"],
+      "key_specs": {"Chipset": "Example 6", "Battery": "6000 mAh"},
+      "prices": [
+        {"site": "Flipkart", "price": 17999, "url": "https://example.com/flipkart-b-placeholder", "checked_on": "2026-01-01", "delivery": "yes"}
+      ],
+      "service": {"status": "not_checked", "detail": "", "url": ""},
+      "sources": [{"title": "Review (placeholder)", "url": "https://example.com/review-placeholder"}]
+    }
+  ],
+  "also_considered": [
+    {"name": "Example Phone C", "why_not": "Placeholder: only 2 years of updates"}
+  ],
+  "assumptions": ["Placeholder: assumed 128 GB is enough"],
+  "not_confirmed": ["Placeholder: local shop prices"]
+}
