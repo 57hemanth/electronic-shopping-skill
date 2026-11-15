@@ -6,7 +6,8 @@
 Per skill: SKILL.md has frontmatter with name and description; name is 1-64 chars of [a-z0-9-] and equals
 the folder name; description is non-empty and <= 400 chars (Codex shares a small budget across skills);
 SKILL.md is <= 500 lines; every references/, assets/ or scripts/ path it mentions exists; scripts compile;
-JSON assets parse. Exit 1 on any error.
+JSON assets parse. Also checks the Gemini CLI command files (commands/*.toml need a prompt) and that
+the JSON manifests parse with a name matching the skill. Exit 1 on any error.
 """
 from __future__ import annotations
 
@@ -15,6 +16,7 @@ import json
 import py_compile
 import re
 import sys
+import tomllib
 from pathlib import Path
 
 NAME_RE = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
@@ -72,6 +74,28 @@ def main() -> int:
             except json.JSONDecodeError as ex:
                 errors.append(f"{d.name}: {js.name} is not valid JSON: {ex}")
         print(f"{d.name}: description {len(desc)} chars, SKILL.md {text.count(chr(10))} lines")
+    repo = root.parent
+    for toml in sorted((repo / "commands").glob("*.toml")):
+        try:
+            data = tomllib.loads(toml.read_text(encoding="utf-8"))
+        except tomllib.TOMLDecodeError as ex:
+            errors.append(f"commands/{toml.name}: invalid TOML: {ex}")
+            continue
+        if not str(data.get("prompt", "")).strip():
+            errors.append(f"commands/{toml.name}: prompt is required")
+        print(f"commands/{toml.name}: ok")
+    for manifest in ("gemini-extension.json", "plugin.json", ".claude-plugin/marketplace.json"):
+        f = repo / manifest
+        if not f.exists():
+            continue
+        try:
+            data = json.loads(f.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as ex:
+            errors.append(f"{manifest}: invalid JSON: {ex}")
+            continue
+        if manifest != ".claude-plugin/marketplace.json" and not NAME_RE.match(str(data.get("name", ""))):
+            errors.append(f"{manifest}: name must be lowercase with hyphens")
+        print(f"{manifest}: ok")
     for e in errors:
         print(f"ERROR {e}", file=sys.stderr)
     print("OK" if not errors else f"{len(errors)} error(s)")

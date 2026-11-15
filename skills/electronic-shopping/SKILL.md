@@ -3,7 +3,7 @@ name: electronic-shopping
 description: Recommends a mobile, laptop, TV, AC or watch for buyers in Telangana and Andhra Pradesh. Asks budget, brand preference, use and pincode, researches Amazon, Flipkart, brand stores and local chains, checks delivery and service near the pincode, then writes an HTML report and a WhatsApp message. Use for "which phone/laptop/TV/AC/watch should I buy".
 license: Not yet chosen by the author.
 metadata:
-  version: "0.1.0"
+  version: "0.2.0"
   region: Telangana, Andhra Pradesh
 ---
 
@@ -121,7 +121,8 @@ If nothing in the budget is good, say so and say how much more buys a real impro
    ```bash
    python3 <skill-dir>/scripts/build_report.py shopping/<folder>/research.json
    ```
-   `<skill-dir>` is this skill's folder (in Claude Code, `${CLAUDE_SKILL_DIR}`). It validates the
+   `<skill-dir>` is this skill's folder (in Claude Code, `${CLAUDE_SKILL_DIR}`; in Codex and
+   Gemini CLI, the folder this SKILL.md was loaded from). It validates the
    research (every price has a site, a URL and a date; at least one source per pick), then writes
    `report.html` and `whatsapp.txt` next to the JSON. Add `--png` to also save `report.png` using local
    Chrome, which shares better on WhatsApp than an HTML file. If validation fails, fix the research;

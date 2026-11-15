@@ -1,0 +1,11 @@
+description = "Buying advice for a mobile, laptop, TV, AC or watch (Telangana and Andhra Pradesh): asks budget, brand, use and pincode, researches, writes an HTML report and a WhatsApp message"
+
+prompt = """
+Activate the `electronic-shopping` skill and follow its SKILL.md exactly.
+
+The request: {{args}}
+
+If the request above is empty, or doesn't say the category, budget, brand preference, main use or
+pincode, start with the skill's Step 1 and ask for what's missing in one message before searching.
+Answer in English only.
+"""

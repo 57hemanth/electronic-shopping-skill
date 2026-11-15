@@ -3,7 +3,7 @@
   "owner": { "name": "Hemanth Yanamaddi" },
   "metadata": {
     "description": "Buying advice for mobiles, laptops, TVs, ACs and watches, for Telangana and Andhra Pradesh.",
-    "version": "0.1.0"
+    "version": "0.2.0"
   },
   "plugins": [
     {

@@ -4,7 +4,7 @@ An Agent Skill that helps you answer **"which phone is good under ₹20,000?"**,
 neighbours in Telangana and Andhra Pradesh keep asking. It covers **mobiles, laptops, TVs, ACs and
 watches**.
 
-You ask your coding agent (Claude Code or Codex). The skill makes it:
+You ask your coding agent (Claude Code, Codex or Gemini CLI). The skill makes it:
 
 1. **Ask first:**
    - budget;
@@ -36,13 +36,34 @@ source link and date. The report builder refuses research that doesn't.
 ```bash
 git clone https://github.com/57hemanth/electronic-shopping-skill.git
 cd electronic-shopping-skill
-./install.sh            # links the skill into ~/.claude/skills and ~/.agents/skills
+./install.sh            # Claude Code, Codex and Gemini CLI
 ./install.sh --list     # what's installed where
 ./install.sh --uninstall
 ```
 
-The skill is symlinked, so `git pull` updates it everywhere. Claude Code can also install it as a plugin:
-`/plugin marketplace add 57hemanth/electronic-shopping-skill`, then `/plugin install electronic-shopping`.
+`install.sh` creates symlinks, so `git pull` updates every agent:
+
+| Agent | Where it links | Notes |
+| --- | --- | --- |
+| Claude Code | `~/.claude/skills/electronic-shopping` | |
+| Codex | `~/.agents/skills/electronic-shopping` | |
+| Gemini CLI | `~/.agents/skills/electronic-shopping` (Gemini reads this folder too) and `~/.gemini/commands/electronic-shopping.toml` | The command adds `/electronic-shopping`. The skill is deliberately not also put in `~/.gemini/skills`, because Gemini warns about a conflict when the same skill is in both |
+
+Pick one agent with `--claude`, `--codex` or `--gemini`.
+
+### Other ways to install
+
+- **Claude Code plugin:** `/plugin marketplace add 57hemanth/electronic-shopping-skill`, then
+  `/plugin install electronic-shopping`.
+- **Gemini CLI skill only:**
+  `gemini skills install https://github.com/57hemanth/electronic-shopping-skill.git --path skills`.
+- **Gemini CLI extension** (the skill plus the `/electronic-shopping` command):
+  `gemini extensions install https://github.com/57hemanth/electronic-shopping-skill`.
+- **Antigravity CLI (`agy`):** `plugin.json` is included for `agy plugin install
+  https://github.com/57hemanth/electronic-shopping-skill.git`. *Not tested yet.*
+
+Use only one install method per agent. Two copies of the same skill make Gemini print a conflict warning,
+and the extension copy only updates with `gemini extensions update`.
 
 ## Use
 
@@ -50,6 +71,8 @@ Start a new session in any folder and ask:
 
 - Claude Code: `/electronic-shopping`, or just ask "camera phone under ₹20,000 for my mother, pincode 507001".
 - Codex: `$electronic-shopping`, or ask the same way.
+- Gemini CLI: `/electronic-shopping camera phone under ₹20,000 for my mother, 507001`, or ask the same way.
+  Gemini asks for permission before activating the skill.
 
 It asks what it still needs, researches, and writes into `shopping/<date>-<category>-<slug>/` in the
 current folder:
@@ -68,7 +91,8 @@ Flipkart need a browser:
 
 - **Claude Code:** connect the Claude in Chrome extension. It uses your own
   Chrome, opens product pages in tabs, enters the pincode and reads the result.
-- **Codex:** add a browser MCP server (for example Playwright or Chrome DevTools).
+- **Codex and Gemini CLI:** add a browser MCP server (for example Playwright or Chrome DevTools) to
+  the agent's MCP settings (for Gemini, `mcpServers` in `~/.gemini/settings.json`).
 
 Without a browser, the skill still works and marks delivery as "not checked". In both cases it only
 reads pages: no sign-in, no cart, no purchase, about 15 pages per request.
@@ -93,7 +117,11 @@ skills/electronic-shopping/
   scripts/build_report.py      validates research, writes report.html, whatsapp.txt, report.png
 scripts/validate_skills.py     checks the skill against the Agent Skills spec
 tests/                         python3 -m unittest discover -s tests
-install.sh                     symlinks into Claude Code and Codex
+commands/electronic-shopping.toml  Gemini CLI slash command
+gemini-extension.json          Gemini CLI extension manifest
+plugin.json                    Antigravity CLI plugin manifest (untested)
+.claude-plugin/                Claude Code plugin marketplace
+install.sh                     symlinks into Claude Code, Codex and Gemini CLI
 ```
 
 Everything is Python 3.10+ standard library; `--png` uses your local Chrome.
