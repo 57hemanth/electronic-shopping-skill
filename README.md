@@ -84,18 +84,28 @@ current folder:
 | `whatsapp.txt` | A short message to paste into WhatsApp |
 | `report.png` | With `--png`: the report as one phone-width image |
 
-### Browser (optional, recommended)
+### Browser (recommended: you can watch it work)
 
-Web search covers models, specs and reviews. Live prices and **pincode delivery checks** on Amazon and
-Flipkart need a browser:
+Web search covers models, specs and reviews. With a browser connected, the skill also works through the
+stores **in your own Chrome window**: it opens each shortlisted product on Amazon, Flipkart and the
+brand's store in tabs, enters the pincode, reads the price and delivery, closes the tabs and moves on to
+the next one. Then it checks service-centre locators and finally opens the report in a tab.
 
-- **Claude Code:** connect the Claude in Chrome extension. It uses your own
-  Chrome, opens product pages in tabs, enters the pincode and reads the result.
-- **Codex and Gemini CLI:** add a browser MCP server (for example Playwright or Chrome DevTools) to
-  the agent's MCP settings (for Gemini, `mcpServers` in `~/.gemini/settings.json`).
+- **Claude Code:** install the [Claude in Chrome extension](https://chromewebstore.google.com/detail/claude/fcoeoabgfenejglbffodgkkbkcdhcgfn),
+  then start with `claude --chrome`. To have it on every session, run `/chrome` and choose
+  **Enabled by default**. It needs a Claude plan sign-in (`/login`), not an API key.
+- **Codex and Gemini CLI:** add a browser MCP server (for example Chrome DevTools or Playwright) to the
+  agent's MCP settings (for Gemini, `mcpServers` in `~/.gemini/settings.json`).
 
-Without a browser, the skill still works and marks delivery as "not checked". In both cases it only
-reads pages: no sign-in, no cart, no purchase, about 15 pages per request.
+Without a browser, the skill says how to connect one, then continues with web search and marks delivery
+as "not checked". Plain page fetches of Amazon and Flipkart are often blocked, so the browser also
+gets more prices confirmed.
+
+The browser only reads: no sign-in, no cart, no purchase, about 20 pages per request. If a store shows
+a CAPTCHA or a login wall, the skill skips that store.
+
+**Recording a demo:** ask "record the store checks as a GIF". Claude in Chrome records what's in the
+window, including the account name on stores you're signed into, so check it before sharing.
 
 ## Make it yours
 
