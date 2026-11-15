@@ -88,6 +88,22 @@ class OutputTest(unittest.TestCase):
         out = build_report.render_html(d, build_report.LABELS["en"])
         self.assertNotIn("<script>alert(1)</script>", out)
 
+    def test_whatsapp_button_carries_the_exact_message(self):
+        import html as h, re, urllib.parse
+        d = example()
+        out = build_report.render_html(d, build_report.LABELS["en"])
+        href = h.unescape(re.search(r'href="(https://wa\.me/\?text=[^"]+)"', out).group(1))
+        sent = urllib.parse.unquote(href.split("text=", 1)[1])
+        self.assertEqual(sent, build_report.render_whatsapp(d, build_report.LABELS["en"]))
+        self.assertIn('id="copy-btn"', out)
+
+    def test_message_json_cannot_close_the_script_tag(self):
+        d = example()
+        d["advice"] = "</script><b>x</b>"
+        out = build_report.render_html(d, build_report.LABELS["en"])
+        block = out.split('id="wa-msg">', 1)[1].split("</script>", 1)[0]
+        self.assertNotIn("</", block)
+
     def test_english_labels(self):
         out = build_report.render_whatsapp(example(), build_report.LABELS["en"])
         self.assertIn("My pick", out)

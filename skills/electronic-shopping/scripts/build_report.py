@@ -5,7 +5,8 @@
 
 Reads research.json (format: ../assets/research.example.json), refuses it if any price lacks a site,
 a number, a URL or a date, or any pick lacks a source, then writes next to it (or into --out):
-  report.html   one self-contained page, phone friendly, light and dark
+  report.html   one self-contained page, phone friendly, light and dark, with "Share on WhatsApp"
+                and "Copy message" buttons (left out of report.png)
   whatsapp.txt  a short message to paste into WhatsApp
   report.png    with --png, a full-page image made with local Chrome (shares well on WhatsApp)
 Exit 0 on success, 1 on invalid research or a missing file.
@@ -19,6 +20,7 @@ import re
 import shutil
 import subprocess
 import sys
+import urllib.parse
 from pathlib import Path
 
 CATEGORIES = {"mobile", "laptop", "tv", "ac", "watch"}
@@ -39,6 +41,7 @@ LABELS = {
         "footer": "Prices change daily. Check the link again before buying. At a local shop, show this online price and ask them to match it.",
         "wa_head": "{cat} advice", "wa_best": "My pick", "wa_tail": "Prices checked on {date}. Check the link again before buying.",
         "on": "", "variant": "Variant",
+        "share_wa": "Share on WhatsApp", "copy": "Copy message", "copied": "Copied ✓", "copy_fail": "Select and copy the message below",
     },
 }
 
@@ -175,6 +178,16 @@ a{color:var(--accent)}
 .note{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 18px;margin:18px 0}
 .note h2{font-size:15px;margin:0 0 6px}
 .note ul{margin:0;padding-left:20px}
+main{padding-bottom:104px}
+.share{position:fixed;left:0;right:0;bottom:0;z-index:10;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-top:1px solid var(--line);padding:12px 16px calc(12px + env(safe-area-inset-bottom))}
+.share-in{max-width:760px;margin:0 auto;display:flex;gap:10px}
+.btn{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:0 16px;border-radius:12px;font:inherit;font-weight:700;font-size:16px;text-decoration:none;cursor:pointer;border:1px solid transparent}
+.btn-wa{background:#1a7f4b;color:#fff}.btn-wa:hover{background:#156b3f}
+.btn-copy{flex:0 0 auto;background:var(--card);color:var(--ink);border-color:var(--line)}.btn-copy:hover{border-color:var(--muted)}
+.btn:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.btn svg{width:20px;height:20px;flex:0 0 auto}
+#wa-fallback{display:none;width:100%;margin-top:10px;min-height:140px;font:14px/1.4 ui-monospace,monospace;border:1px solid var(--line);border-radius:8px;padding:8px;background:var(--card);color:var(--ink)}
+html.capture .share{display:none}html.capture main{padding-bottom:48px}
 footer{margin-top:28px;padding-top:14px;border-top:1px solid var(--line);color:var(--muted);font-size:14px}
 """
 
@@ -243,16 +256,43 @@ def render_html(d: dict, L: dict) -> str:
             out.append(f'<section class="note"><h2>{e(label)}</h2><ul>' + "".join(f"<li>{e(x)}</li>" for x in d[key]) + "</ul></section>")
     out.append(f'<footer>{e(L["footer"])}</footer>')
 
+    msg = render_whatsapp(d, L)
+    wa_url = "https://wa.me/?text=" + urllib.parse.quote(msg, safe="")
+    bubble = ('<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" '
+              'stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-12.4 7.4L3 20.5l1.6-5.4'
+              'A8.4 8.4 0 1 1 21 11.5z"/></svg>')
+    copy_icon = ('<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" '
+                 'stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/>'
+                 '<path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>')
+    share = (f'<div class="share" role="region" aria-label="Share"><div class="share-in">'
+             f'<a class="btn btn-wa" href="{e(wa_url)}" target="_blank" rel="noopener">{bubble}{e(L["share_wa"])}</a>'
+             f'<button type="button" class="btn btn-copy" id="copy-btn" data-label="{e(L["copy"])}" '
+             f'data-done="{e(L["copied"])}" data-fail="{e(L["copy_fail"])}">{copy_icon}<span>{e(L["copy"])}</span></button>'
+             f'</div><div class="share-in"><textarea id="wa-fallback" readonly aria-label="WhatsApp message">{e(msg)}</textarea></div></div>')
+    msg_json = json.dumps(msg, ensure_ascii=False).replace("</", "<\\/")
+
     title = f"{cat} · {L['title']} · {req['pincode']}"
     return ("<!doctype html>\n"
             f'<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
             f"<title>{e(title)}</title>"
+            "<script>if(/[?&]capture=1/.test(location.search))document.documentElement.className+=' capture'</script>"
             '<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>'
             '<link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">'
-            f"<style>{CSS}</style></head><body><main>" + "\n".join(out) + "</main>"
+            f"<style>{CSS}</style></head><body><main>" + "\n".join(out) + "</main>" + share +
+            f'<script type="application/json" id="wa-msg">{msg_json}</script>'
+            + COPY_JS +
             "<script>addEventListener('load',function(){(document.fonts?document.fonts.ready:Promise.resolve()).then(function(){"
             "document.documentElement.setAttribute('data-h',document.documentElement.scrollHeight)})})</script>"
             "</body></html>\n")
+
+
+COPY_JS = """<script>(function(){var b=document.getElementById('copy-btn');if(!b)return;
+var t=JSON.parse(document.getElementById('wa-msg').textContent),s=b.querySelector('span');
+function done(ok){if(ok){s.textContent=b.dataset.done;setTimeout(function(){s.textContent=b.dataset.label},2000)}
+else{var f=document.getElementById('wa-fallback');f.style.display='block';f.focus();f.select();s.textContent=b.dataset.fail}}
+function legacy(){var a=document.createElement('textarea');a.value=t;a.setAttribute('readonly','');a.style.position='fixed';a.style.opacity='0';
+document.body.appendChild(a);a.select();var ok=false;try{ok=document.execCommand('copy')}catch(e){}document.body.removeChild(a);return ok}
+b.addEventListener('click',function(){if(navigator.clipboard&&window.isSecureContext){navigator.clipboard.writeText(t).then(function(){done(true)},function(){done(legacy())})}else{done(legacy())}})})()</script>"""
 
 
 def render_whatsapp(d: dict, L: dict) -> str:
@@ -288,7 +328,7 @@ def make_png(html_path: Path, png_path: Path, width: int = 540) -> bool:
     if not chrome:
         print("  --png: Chrome not found; skipped report.png", file=sys.stderr)
         return False
-    url = html_path.resolve().as_uri()
+    url = html_path.resolve().as_uri() + "?capture=1"  # hides the share bar in the image
     base = [chrome, "--headless=new", "--hide-scrollbars", "--blink-settings=preferredColorScheme=1",
             "--virtual-time-budget=4000"]
     height = 2400

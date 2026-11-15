@@ -127,7 +127,9 @@ If nothing in the budget is good, say so and say how much more buys a real impro
    `report.html` and `whatsapp.txt` next to the JSON. Add `--png` to also save `report.png` using local
    Chrome, which shares better on WhatsApp than an HTML file. If validation fails, fix the research;
    never fill in a value to make it pass.
-3. Open `report.html` in the browser if one is available.
+3. Open `report.html` in the browser if one is available. Its bottom bar has **Share on WhatsApp** (a
+   `wa.me` link with the message filled in; the user picks the contact) and **Copy message**. WhatsApp
+   links carry text only; to send the image, share `report.png` itself.
 
 ## Step 6: Hand back
 

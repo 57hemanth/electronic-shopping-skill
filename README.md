@@ -80,7 +80,7 @@ current folder:
 | File | What it is |
 | --- | --- |
 | `research.json` | Everything it found, with sources and dates |
-| `report.html` | The report: top 3, prices per site, delivery, service centre, why / drawbacks, sources |
+| `report.html` | The report: top 3, prices per site, delivery, service centre, why / drawbacks, sources. A bar at the bottom has **Share on WhatsApp** (opens WhatsApp with the message typed; you pick the contact) and **Copy message** |
 | `whatsapp.txt` | A short message to paste into WhatsApp |
 | `report.png` | With `--png`: the report as one phone-width image |
 
