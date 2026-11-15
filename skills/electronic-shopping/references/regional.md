@@ -21,12 +21,6 @@
 - Delivery to rural pincodes can take longer, and installation (AC, TV) may be scheduled days later.
   Check both on the product page with the pincode.
 
-## Language
-- Most buyers read Telugu; keep model names, specs and site names in English (that's what they'll see
-  in the shop and on the box).
-- Write the WhatsApp message the way people speak: Telugu with common English words (phone, camera,
-  battery, price, link).
-
 ## How people buy here
 - Many buyers compare online but buy at a local shop for EMI, exchange and help with setup. The advice
   should work for both: give the online price as a reference to bargain with.

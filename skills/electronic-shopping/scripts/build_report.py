@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Validate a shopping research file and build the report.
 
-  python3 build_report.py shopping/<folder>/research.json [--lang te|en] [--png] [--out DIR]
+  python3 build_report.py shopping/<folder>/research.json [--png] [--out DIR]
 
 Reads research.json (format: ../assets/research.example.json), refuses it if any price lacks a site,
 a number, a URL or a date, or any pick lacks a source, then writes next to it (or into --out):
@@ -27,19 +27,6 @@ SERVICE = {"found", "not_found", "not_checked"}
 DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
 LABELS = {
-    "te": {
-        "title": "కొనుగోలు సలహా", "category": {"mobile": "Mobile", "laptop": "Laptop", "tv": "TV", "ac": "AC", "watch": "Watch"},
-        "budget": "Budget", "use": "ఉపయోగం", "for": "ఎవరి కోసం", "pincode": "Pincode", "checked": "Prices check చేసిన తేదీ",
-        "advice": "నా సలహా", "best_price": "తక్కువ price", "why": "ఎందుకు", "drawbacks": "లోపాలు", "specs": "ముఖ్యమైన specs",
-        "prices": "Prices", "site": "Site", "price": "Price", "delivery": "Delivery", "link": "Link", "open": "చూడండి",
-        "offers": "Offers (price లో కలపలేదు)", "service": "Service centre", "sources": "Sources", "also": "ఇవి కూడా చూశా",
-        "assumed": "నేను అనుకున్నవి", "unconfirmed": "Confirm కాలేదు", "brand": {"trusted": "Trusted brands", "value": "Value / power brands", "specific": "", "none": "ఏ brand అయినా"},
-        "del": {"yes": "✓ వస్తుంది", "no": "✗ రాదు", "not_checked": "check చేయలేదు"},
-        "svc": {"found": "✓", "not_found": "✗ దగ్గరలో లేదు", "not_checked": "check చేయలేదు"},
-        "footer": "Prices రోజూ మారుతాయి. కొనే ముందు link మళ్ళీ check చేయండి. Local shop లో ఈ online price చూపించి match చేయమని అడగండి.",
-        "wa_head": "{cat} సలహా", "wa_best": "నా సలహా", "wa_tail": "Prices {date} న check చేశా. కొనే ముందు link మళ్ళీ చూడండి.",
-        "on": "", "variant": "Variant",
-    },
     "en": {
         "title": "Buying advice", "category": {"mobile": "Mobile", "laptop": "Laptop", "tv": "TV", "ac": "AC", "watch": "Watch"},
         "budget": "Budget", "use": "Use", "for": "For", "pincode": "Pincode", "checked": "Prices checked on",
@@ -151,7 +138,7 @@ CSS = """
 :root{--bg:#f7f7f5;--card:#fff;--ink:#16181d;--muted:#5d6470;--line:#e3e4e8;--accent:#2457d6;--accent-soft:#eaf0fd;--good:#1f7a4d;--bad:#b3261e;--warn:#8a5a00}
 @media (prefers-color-scheme:dark){:root{--bg:#111317;--card:#1a1d23;--ink:#eceef2;--muted:#a3a9b5;--line:#2c3039;--accent:#7aa2ff;--accent-soft:#1d2740;--good:#5fd39a;--bad:#ff8a80;--warn:#f2c46b}}
 *{box-sizing:border-box}html{-webkit-text-size-adjust:100%}
-body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 "Noto Sans Telugu","Noto Sans",system-ui,-apple-system,"Segoe UI",sans-serif}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 "Noto Sans",system-ui,-apple-system,"Segoe UI",sans-serif}
 main{max-width:760px;margin:0 auto;padding:24px 16px 48px}
 header h1{font-size:26px;line-height:1.2;margin:0 0 4px}
 .meta{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 0;padding:0;list-style:none}
@@ -256,13 +243,12 @@ def render_html(d: dict, L: dict) -> str:
             out.append(f'<section class="note"><h2>{e(label)}</h2><ul>' + "".join(f"<li>{e(x)}</li>" for x in d[key]) + "</ul></section>")
     out.append(f'<footer>{e(L["footer"])}</footer>')
 
-    lang = "te" if L is LABELS["te"] else "en"
     title = f"{cat} · {L['title']} · {req['pincode']}"
     return ("<!doctype html>\n"
-            f'<html lang="{lang}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
+            f'<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
             f"<title>{e(title)}</title>"
             '<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>'
-            '<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Telugu:wght@400;500;600;700;800&family=Noto+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">'
+            '<link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">'
             f"<style>{CSS}</style></head><body><main>" + "\n".join(out) + "</main>"
             "<script>addEventListener('load',function(){(document.fonts?document.fonts.ready:Promise.resolve()).then(function(){"
             "document.documentElement.setAttribute('data-h',document.documentElement.scrollHeight)})})</script>"
@@ -321,7 +307,6 @@ def make_png(html_path: Path, png_path: Path, width: int = 540) -> bool:
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("research", help="path to research.json")
-    ap.add_argument("--lang", choices=["te", "en"], help="override the file's language field")
     ap.add_argument("--png", action="store_true", help="also save report.png using local Chrome")
     ap.add_argument("--out", help="output folder (default: next to research.json)")
     a = ap.parse_args()
@@ -341,8 +326,7 @@ def main() -> int:
         for x in errs:
             print(f"  - {x}", file=sys.stderr)
         return 1
-    lang = a.lang or d.get("language") or "te"
-    L = LABELS[lang if lang in LABELS else "te"]
+    L = LABELS["en"]
     out = Path(a.out) if a.out else src.parent
     out.mkdir(parents=True, exist_ok=True)
     (out / "report.html").write_text(render_html(d, L), encoding="utf-8")

@@ -78,14 +78,14 @@ class OutputTest(unittest.TestCase):
             html = (Path(t) / "report.html").read_text(encoding="utf-8")
             wa = (Path(t) / "whatsapp.txt").read_text(encoding="utf-8")
             self.assertIn("₹18,999", html)
-            self.assertIn("నా సలహా", html)
+            self.assertIn("My advice", html)
             self.assertIn("https://example.com/amazon-placeholder", wa)
             self.assertIn("2026-01-01", wa)
 
     def test_html_escapes_text(self):
         d = example()
         d["advice"] = "<script>alert(1)</script>"
-        out = build_report.render_html(d, build_report.LABELS["te"])
+        out = build_report.render_html(d, build_report.LABELS["en"])
         self.assertNotIn("<script>alert(1)</script>", out)
 
     def test_english_labels(self):

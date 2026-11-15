@@ -8,7 +8,7 @@
   "plugins": [
     {
       "name": "electronic-shopping",
-      "description": "Asks budget, brand preference, use and pincode; researches Amazon, Flipkart, brand stores and local chains; writes an HTML report and a Telugu WhatsApp message.",
+      "description": "Asks budget, brand preference, use and pincode; researches Amazon, Flipkart, brand stores and local chains; writes an HTML report and a WhatsApp message.",
       "source": "./",
       "strict": false,
       "skills": ["./skills/electronic-shopping"]

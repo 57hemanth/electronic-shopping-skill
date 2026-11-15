@@ -1,6 +1,6 @@
 # Electronic shopping skill
 
-An Agent Skill that helps you answer **"₹20,000 లో ఏ phone బాగుంది?"**, the question friends, family and
+An Agent Skill that helps you answer **"which phone is good under ₹20,000?"**, the question friends, family and
 neighbours in Telangana and Andhra Pradesh keep asking. It covers **mobiles, laptops, TVs, ACs and
 watches**.
 
@@ -21,7 +21,7 @@ You ask your coding agent (Claude Code or Codex). The skill makes it:
 4. **Hand back:**
    - a top 3 with prices from named sites, links and the date checked;
    - an **HTML report**;
-   - a **Telugu WhatsApp message** to paste to whoever asked;
+   - a **WhatsApp message** to paste to whoever asked;
    - optionally a **PNG** of the report.
 
 It never makes up a price, model or spec, never logs in or buys anything, and every price carries its
@@ -46,9 +46,9 @@ The skill is symlinked, so `git pull` updates it everywhere. Claude Code can als
 
 ## Use
 
-Start a new session in any folder and ask in Telugu or English:
+Start a new session in any folder and ask:
 
-- Claude Code: `/electronic-shopping`, or just ask "₹20,000 లో camera phone కావాలి, amma కోసం".
+- Claude Code: `/electronic-shopping`, or just ask "camera phone under ₹20,000 for my mother, pincode 507001".
 - Codex: `$electronic-shopping`, or ask the same way.
 
 It asks what it still needs, researches, and writes into `shopping/<date>-<category>-<slug>/` in the
@@ -58,7 +58,7 @@ current folder:
 | --- | --- |
 | `research.json` | Everything it found, with sources and dates |
 | `report.html` | The report: top 3, prices per site, delivery, service centre, why / drawbacks, sources |
-| `whatsapp.txt` | A short Telugu message to paste into WhatsApp |
+| `whatsapp.txt` | A short message to paste into WhatsApp |
 | `report.png` | With `--png`: the report as one phone-width image |
 
 ### Browser (optional, recommended)

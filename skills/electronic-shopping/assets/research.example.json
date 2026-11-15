@@ -1,6 +1,5 @@
 {
   "_schema": "Example only: every name, price and URL here is a placeholder. Copy this file, replace everything with what you found today, and delete this _schema field. Required: request.category, request.pincode, checked_on, advice, and 1-5 picks. Each pick needs name, best_for, why (list), drawbacks (list), at least one price {site, price, url, checked_on} and at least one source {title, url}. Optional: key_specs (object), offers (list), service {status: found | not_found | not_checked, detail, url}, prices[].variant, prices[].delivery (yes | no | not_checked), also_considered [{name, why_not}], assumptions (list), not_confirmed (list).",
-  "language": "te",
   "checked_on": "2026-01-01",
   "request": {
     "category": "mobile",
@@ -9,7 +8,7 @@
     "brand_preference": "value",
     "brands": [],
     "use": "camera",
-    "for_whom": "amma",
+    "for_whom": "mother",
     "pincode": "000000",
     "place": "Example town",
     "notes": "Wants a simple phone with a good camera for family photos."
