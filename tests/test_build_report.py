@@ -68,6 +68,35 @@ class ValidateTest(unittest.TestCase):
         self.assertTrue(any("above the budget" in w for w in build_report.warnings(d)))
 
 
+class PincodeTest(unittest.TestCase):
+    def test_no_pincode_is_allowed(self):
+        d = example()
+        d["request"]["pincode"] = ""
+        d["picks"][0]["prices"][0]["delivery_pincode"] = "500081"
+        d["picks"][1]["prices"][0]["delivery_pincode"] = "500081"
+        self.assertEqual(build_report.validate(d), [])
+        out = build_report.render_html(d, build_report.LABELS["en"])
+        self.assertIn("to 500081", out)
+        self.assertNotIn("not the buyer", out)
+        self.assertNotIn("Pincode ", build_report.render_whatsapp(d, build_report.LABELS["en"]))
+
+    def test_delivery_result_needs_a_pincode_somewhere(self):
+        d = example()
+        d["request"]["pincode"] = ""
+        d["picks"][0]["prices"][0].pop("delivery_pincode", None)
+        self.assertTrue(any("delivery_pincode" in e for e in build_report.validate(d)))
+
+    def test_result_for_another_pincode_is_flagged(self):
+        d = example()  # buyer 507001, store checked 000000
+        out = build_report.render_html(d, build_report.LABELS["en"])
+        self.assertIn("to 000000 · not the buyer", out)
+
+    def test_bad_delivery_pincode(self):
+        d = example()
+        d["picks"][0]["prices"][0]["delivery_pincode"] = "Hyderabad"
+        self.assertTrue(any("delivery_pincode must be" in e for e in build_report.validate(d)))
+
+
 class OutputTest(unittest.TestCase):
     def test_writes_html_and_whatsapp(self):
         with tempfile.TemporaryDirectory() as t:

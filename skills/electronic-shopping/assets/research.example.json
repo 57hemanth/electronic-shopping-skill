@@ -1,5 +1,5 @@
 {
-  "_schema": "Example only: every name, price and URL here is a placeholder. Copy this file, replace everything with what you found today, and delete this _schema field. Required: request.category, request.pincode, checked_on, advice, and 1-5 picks. Each pick needs name, best_for, why (list), drawbacks (list), at least one price {site, price, url, checked_on} and at least one source {title, url}. Optional: key_specs (object), offers (list), service {status: found | not_found | not_checked, detail, url}, prices[].variant, prices[].delivery (yes | no | not_checked), also_considered [{name, why_not}], assumptions (list), not_confirmed (list).",
+  "_schema": "Example only: every name, price and URL here is a placeholder. Copy this file, replace everything with what you found today, and delete this _schema field. Required: request.category, checked_on, advice, and 1-5 picks. Each pick needs name, best_for, why (list), drawbacks (list), at least one price {site, price, url, checked_on} and at least one source {title, url}. Optional: key_specs (object), offers (list), service {status: found | not_found | not_checked, detail, url}, prices[].variant, prices[].delivery (yes | no | not_checked), prices[].delivery_pincode (the 6-digit pincode the store checked; required for yes/no when request.pincode is empty), request.pincode may be empty, also_considered [{name, why_not}], assumptions (list), not_confirmed (list).",
   "checked_on": "2026-01-01",
   "request": {
     "category": "mobile",
@@ -22,7 +22,7 @@
       "drawbacks": ["Placeholder drawback"],
       "key_specs": {"Chipset": "Example 7", "Display": "6.6\" 120 Hz", "Battery": "5000 mAh", "Updates": "4 years OS"},
       "prices": [
-        {"site": "Amazon", "price": 18999, "variant": "8 GB / 128 GB", "url": "https://example.com/amazon-placeholder", "checked_on": "2026-01-01", "delivery": "yes"},
+        {"site": "Amazon", "price": 18999, "variant": "8 GB / 128 GB", "url": "https://example.com/amazon-placeholder", "checked_on": "2026-01-01", "delivery": "yes", "delivery_pincode": "000000"},
         {"site": "Flipkart", "price": 19499, "variant": "8 GB / 128 GB", "url": "https://example.com/flipkart-placeholder", "checked_on": "2026-01-01", "delivery": "not_checked"}
       ],
       "offers": ["Placeholder: ₹1,000 off with an example bank card"],

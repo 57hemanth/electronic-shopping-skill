@@ -11,11 +11,13 @@ You ask your coding agent (Claude Code, Codex or Gemini CLI). The skill makes it
    - brand preference: trusted brands, value / power brands, a specific brand, or any;
    - main use: for example, a laptop for coding, interviews, basic use or gaming;
    - who it is for;
-   - the delivery pincode.
+   - optionally, the buyer's pincode. Skip it and the skill uses the delivery location your Amazon and
+     Flipkart accounts already show.
 2. **Research today's options** on Amazon, Flipkart, brand stores (Samsung, Dell, LG…) and large chains,
    and say when the local chains (Big C, Happi, Lot, Sangeetha, Bajaj Electronics) are worth checking.
 3. **Check what matters locally:**
-   - delivery and installation at the pincode;
+   - delivery and installation, noting which pincode each store checked (it never changes your saved
+     addresses);
    - the nearest authorised service centre;
    - AC sizing for 45 °C summers, coastal corrosion and unstable power.
 4. **Hand back:**
@@ -88,7 +90,8 @@ current folder:
 
 Web search covers models, specs and reviews. With a browser connected, the skill also works through the
 stores **in your own Chrome window**: it opens each shortlisted product on Amazon, Flipkart and the
-brand's store in tabs, enters the pincode, reads the price and delivery, closes the tabs and moves on to
+brand's store in tabs, reads the price and delivery (for the location the store already shows, or the
+buyer's pincode where the page has a simple pincode box), closes the tabs and moves on to
 the next one. Then it checks service-centre locators and finally opens the report in a tab.
 
 - **Claude Code:** install the [Claude in Chrome extension](https://chromewebstore.google.com/detail/claude/fcoeoabgfenejglbffodgkkbkcdhcgfn),

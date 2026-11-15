@@ -19,7 +19,8 @@
 - Service centres are concentrated in district towns. For a village pincode, find the nearest town with
   an authorised centre and say how far it is. Prefer brands with a centre in the buyer's district.
 - Delivery to rural pincodes can take longer, and installation (AC, TV) may be scheduled days later.
-  Check both on the product page with the pincode.
+  Check both on the product page for the buyer's pincode when you can; otherwise say the result is for
+  the account's own location.
 
 ## How people buy here
 - Many buyers compare online but buy at a local shop for EMI, exchange and help with setup. The advice

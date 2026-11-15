@@ -31,7 +31,8 @@ DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 LABELS = {
     "en": {
         "title": "Buying advice", "category": {"mobile": "Mobile", "laptop": "Laptop", "tv": "TV", "ac": "AC", "watch": "Watch"},
-        "budget": "Budget", "use": "Use", "for": "For", "pincode": "Pincode", "checked": "Prices checked on",
+        "budget": "Budget", "use": "Use", "for": "For", "pincode": "Pincode", "place": "Place", "checked": "Prices checked on",
+        "del_to": "to {pin}", "del_other": "not the buyer's pincode",
         "advice": "My advice", "best_price": "Best price", "why": "Why it fits", "drawbacks": "Drawbacks", "specs": "Key specs",
         "prices": "Prices", "site": "Site", "price": "Price", "delivery": "Delivery", "link": "Link", "open": "Open",
         "offers": "Offers (not included in the price)", "service": "Service centre", "sources": "Sources", "also": "Also considered",
@@ -64,8 +65,8 @@ def validate(d: dict) -> list[str]:
     req = d.get("request") or {}
     if req.get("category") not in CATEGORIES:
         errs.append(f"request.category must be one of {sorted(CATEGORIES)}")
-    if not re.fullmatch(r"\d{6}", str(req.get("pincode", ""))):
-        errs.append("request.pincode must be 6 digits")
+    if req.get("pincode") not in (None, "") and not re.fullmatch(r"\d{6}", str(req["pincode"])):
+        errs.append("request.pincode must be 6 digits, or empty when the buyer didn't give one")
     if not DATE_RE.match(str(d.get("checked_on", ""))):
         errs.append("checked_on must be YYYY-MM-DD")
     if not str(d.get("advice", "")).strip():
@@ -96,6 +97,11 @@ def validate(d: dict) -> list[str]:
                 errs.append(f"{ptag}: checked_on must be YYYY-MM-DD")
             if pr.get("delivery", "not_checked") not in DELIVERY:
                 errs.append(f"{ptag}: delivery must be one of {sorted(DELIVERY)}")
+            dp = pr.get("delivery_pincode")
+            if dp not in (None, "") and not re.fullmatch(r"\d{6}", str(dp)):
+                errs.append(f"{ptag}: delivery_pincode must be the 6-digit pincode the store showed")
+            if pr.get("delivery") in ("yes", "no") and not dp and not req.get("pincode"):
+                errs.append(f"{ptag}: a delivery result needs delivery_pincode (the pincode the store checked)")
         srcs = p.get("sources") or []
         if not srcs or not all(str(s.get("url", "")).startswith(("http://", "https://")) for s in srcs):
             errs.append(f"{tag}: needs at least one source, each with a url")
@@ -122,6 +128,18 @@ def warnings(d: dict) -> list[str]:
 
 def e(x: object) -> str:
     return html.escape(str(x), quote=True)
+
+
+def delivery_note(pr: dict, req: dict, L: dict) -> str:
+    """Say which pincode a delivery result is for, and flag it when it isn't the buyer's."""
+    if pr.get("delivery", "not_checked") == "not_checked":
+        return ""
+    dp = pr.get("delivery_pincode") or req.get("pincode") or ""
+    if not dp:
+        return ""
+    other = req.get("pincode") and dp != req.get("pincode")
+    text = L["del_to"].format(pin=dp) + (f" · {L['del_other']}" if other else "")
+    return f'<br><span style="color:var(--muted);font-size:12px">{e(text)}</span>'
 
 
 def best(p: dict) -> dict:
@@ -203,7 +221,9 @@ def render_html(d: dict, L: dict) -> str:
         meta.append(("Brand", brand))
     if req.get("for_whom"):
         meta.append((L["for"], req["for_whom"]))
-    meta.append((L["pincode"], req["pincode"] + (f" · {req['place']}" if req.get("place") else "")))
+    if req.get("pincode") or req.get("place"):
+        meta.append((L["pincode"] if req.get("pincode") else L["place"],
+                     " · ".join(x for x in (req.get("pincode"), req.get("place")) if x)))
     meta.append((L["checked"], d["checked_on"]))
     out = [f'<header><h1>{e(cat)} · {e(L["title"])}</h1><ul class="meta">']
     out += [f"<li>{e(k)}: <b>{e(v)}</b></li>" for k, v in meta]
@@ -226,12 +246,12 @@ def render_html(d: dict, L: dict) -> str:
         out.append(f'<h4>{e(L["why"])}</h4><ul class="why">' + "".join(f"<li>{e(x)}</li>" for x in p["why"]) + "</ul></div><div>")
         out.append(f'<h4>{e(L["drawbacks"])}</h4><ul class="cons">' + "".join(f"<li>{e(x)}</li>" for x in p["drawbacks"]) + "</ul></div></div>")
         out.append(f'<h4>{e(L["prices"])}</h4><table class="tbl"><thead><tr><th>{e(L["site"])}</th><th>{e(L["price"])}</th>'
-                   f'<th>{e(L["delivery"])} {e(req["pincode"])}</th><th>{e(L["link"])}</th></tr></thead><tbody>')
+                   f'<th>{e(L["delivery"])}</th><th>{e(L["link"])}</th></tr></thead><tbody>')
         for pr in sorted(p["prices"], key=lambda x: x["price"]):
             dv = pr.get("delivery", "not_checked")
             var = f'<br><span style="color:var(--muted)">{e(pr["variant"])}</span>' if pr.get("variant") else ""
             out.append(f'<tr><td>{e(pr["site"])}{var}</td><td><b>{e(inr(pr["price"]))}</b></td>'
-                       f'<td class="del-{e(dv)}">{e(L["del"][dv])}</td><td><a href="{e(pr["url"])}" target="_blank" rel="noopener">{e(L["open"])}</a></td></tr>')
+                       f'<td class="del-{e(dv)}">{e(L["del"][dv])}{delivery_note(pr, req, L)}</td><td><a href="{e(pr["url"])}" target="_blank" rel="noopener">{e(L["open"])}</a></td></tr>')
         out.append("</tbody></table>")
         if p.get("offers"):
             out.append(f'<h4>{e(L["offers"])}</h4><ul>' + "".join(f"<li>{e(x)}</li>" for x in p["offers"]) + "</ul>")
@@ -271,7 +291,7 @@ def render_html(d: dict, L: dict) -> str:
              f'</div><div class="share-in"><textarea id="wa-fallback" readonly aria-label="WhatsApp message">{e(msg)}</textarea></div></div>')
     msg_json = json.dumps(msg, ensure_ascii=False).replace("</", "<\\/")
 
-    title = f"{cat} · {L['title']} · {req['pincode']}"
+    title = f"{cat} · {L['title']}" + (f" · {req['pincode']}" if req.get("pincode") else "")
     return ("<!doctype html>\n"
             f'<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
             f"<title>{e(title)}</title>"
@@ -299,7 +319,8 @@ def render_whatsapp(d: dict, L: dict) -> str:
     req = d["request"]
     cat = L["category"][req["category"]]
     head = L["wa_head"].format(cat=cat)
-    lines = [f"*{head}* ({budget_text(req)}, {L['pincode']} {req['pincode']})", ""]
+    where = f", {L['pincode']} {req['pincode']}" if req.get("pincode") else ""
+    lines = [f"*{head}* ({budget_text(req)}{where})", ""]
     for i, p in enumerate(d["picks"], 1):
         b = best(p)
         lines.append(f"*{i}. {p['name']}*: {inr(b['price'])} ({b['site']})")

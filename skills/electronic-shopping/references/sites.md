@@ -2,7 +2,8 @@
 
 Check **at least two** of these for every shortlisted model. Use the exact product page, not a search
 results page. Record: site, price paid without a specific bank card, the variant, the URL, today's date,
-delivery to the pincode (yes / no / not checked), and offers separately.
+delivery (yes / no / not checked) with the pincode the store checked, and offers separately. Never
+change the account's saved address; see SKILL.md "Delivery and pincode".
 
 ## Marketplaces
 | Site | Check | Watch out for |
